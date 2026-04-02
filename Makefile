@@ -4,9 +4,9 @@ ENV_DIR       := terraform/aws/environments/techXX
 REGION        := ap-northeast-1
 ENV_FILE      := .env.handson
 
-# デフォルト値（Public 用）
+# デフォルト値
 PROFILE       ?= aws-handson
-BUCKET_PREFIX ?= ca25
+BUCKET_PREFIX ?= ca26
 
 # .env.handson から変数を読み込む（setup 後は保存済みの値を使用）
 -include $(ENV_FILE)
@@ -16,22 +16,26 @@ export
 # Setup
 ####################
 
-# Private (CyberAgent) 用:
-#   make setup TEAM_NAME=tech99 USER_NAME=ibaraki PROFILE=aws-ca26-tech99 BUCKET_PREFIX=ca26
+# Example:
+#   make setup TEAM_NAME=tech01 USER_NAME=ibaraki DOMAIN_NAME=tech01-handson.ca26.ca-developers.io
 #
-# Public 用:
-#   make setup TEAM_NAME=myteam USER_NAME=taro PROFILE=default BUCKET_PREFIX=myproject
+# Private (CyberAgent) 用:
+#   make setup TEAM_NAME=tech99 USER_NAME=ibaraki PROFILE=aws-ca26-tech99 DOMAIN_NAME=tech99-handson.ca26.ca-developers.io
 setup:
 ifndef TEAM_NAME
-	$(error TEAM_NAME is required. Example: make setup TEAM_NAME=tech01 USER_NAME=ibaraki)
+	$(error TEAM_NAME is required. Example: make setup TEAM_NAME=tech01 USER_NAME=ibaraki DOMAIN_NAME=tech01-handson.ca26.ca-developers.io)
 endif
 ifndef USER_NAME
-	$(error USER_NAME is required. Example: make setup TEAM_NAME=tech01 USER_NAME=ibaraki)
+	$(error USER_NAME is required. Example: make setup TEAM_NAME=tech01 USER_NAME=ibaraki DOMAIN_NAME=tech01-handson.ca26.ca-developers.io)
+endif
+ifndef DOMAIN_NAME
+	$(error DOMAIN_NAME is required. Example: make setup TEAM_NAME=tech01 USER_NAME=ibaraki DOMAIN_NAME=tech01-handson.ca26.ca-developers.io)
 endif
 	@echo "========================================="
 	@echo "  AWS Handson Setup"
 	@echo "  TEAM_NAME:     $(TEAM_NAME)"
 	@echo "  USER_NAME:     $(USER_NAME)"
+	@echo "  DOMAIN_NAME:   $(DOMAIN_NAME)"
 	@echo "  PROFILE:       $(PROFILE)"
 	@echo "  BUCKET_PREFIX: $(BUCKET_PREFIX)"
 	@echo "========================================="
@@ -48,8 +52,8 @@ endif
 		-exec sed -i '' 's/aws-handson/$(PROFILE)/g' {} +
 	@# --- bucket prefix の置換 ---
 	@find $(ENV_DIR) -type f \( -name "*.tf" -o -name "*.md" \) \
-		-exec sed -i '' 's/ca25-/$(BUCKET_PREFIX)-/g' {} +
-	@sed -i '' 's/ca25-/$(BUCKET_PREFIX)-/g' README.md
+		-exec sed -i '' 's/ca26-/$(BUCKET_PREFIX)-/g' {} +
+	@sed -i '' 's/ca26-/$(BUCKET_PREFIX)-/g' README.md
 	@# --- ecs/variables.tf: app_name と image_tag のデフォルト値を設定 ---
 	@sed -i '' 's|# default     = "your-name" # 自分の名前に変更|default     = "$(USER_NAME)"|g' \
 		$(ENV_DIR)/ecs/variables.tf
@@ -58,9 +62,15 @@ endif
 	@# --- route53/variables.tf: sub_domain_prefix のデフォルト値を設定 ---
 	@sed -i '' 's|# default     = "your-name"|default     = "$(USER_NAME)"|g' \
 		$(ENV_DIR)/route53/variables.tf
+	@# --- domain_name のデフォルト値を設定（ecs, route53） ---
+	@sed -i '' 's|# default     = "your-domain-name" # 自分のチームのドメイン名に変更|default     = "$(DOMAIN_NAME)"|g' \
+		$(ENV_DIR)/ecs/variables.tf
+	@sed -i '' 's|# default     = "your-domain-name"|default     = "$(DOMAIN_NAME)"|g' \
+		$(ENV_DIR)/route53/variables.tf
 	@# --- .env.handson に設定を保存 ---
 	@echo "TEAM_NAME=$(TEAM_NAME)" > $(ENV_FILE)
 	@echo "USER_NAME=$(USER_NAME)" >> $(ENV_FILE)
+	@echo "DOMAIN_NAME=$(DOMAIN_NAME)" >> $(ENV_FILE)
 	@echo "PROFILE=$(PROFILE)" >> $(ENV_FILE)
 	@echo "BUCKET_PREFIX=$(BUCKET_PREFIX)" >> $(ENV_FILE)
 	@echo ""
@@ -160,19 +170,17 @@ help:
 	@echo "AWS Handson Makefile"
 	@echo ""
 	@echo "  Setup:"
-	@echo "    make setup TEAM_NAME=tech01 USER_NAME=ibaraki [PROFILE=aws-handson] [BUCKET_PREFIX=ca25]"
+	@echo "    make setup TEAM_NAME=tech01 USER_NAME=ibaraki DOMAIN_NAME=tech01-handson.ca26.ca-developers.io"
 	@echo ""
 	@echo "    Parameters:"
 	@echo "      TEAM_NAME      (required) Team identifier (e.g., tech01, tech99)"
 	@echo "      USER_NAME      (required) Your name (e.g., ibaraki)"
+	@echo "      DOMAIN_NAME    (required) Team domain (e.g., tech01-handson.ca26.ca-developers.io)"
 	@echo "      PROFILE        (optional) AWS profile name (default: aws-handson)"
-	@echo "      BUCKET_PREFIX  (optional) S3 bucket prefix (default: ca25)"
+	@echo "      BUCKET_PREFIX  (optional) S3 bucket prefix (default: ca26)"
 	@echo ""
-	@echo "    Private (CyberAgent):"
-	@echo "      make setup TEAM_NAME=tech99 USER_NAME=ibaraki PROFILE=aws-ca26-tech99 BUCKET_PREFIX=ca26"
-	@echo ""
-	@echo "    Public:"
-	@echo "      make setup TEAM_NAME=myteam USER_NAME=taro PROFILE=default BUCKET_PREFIX=myproject"
+	@echo "    Example:"
+	@echo "      make setup TEAM_NAME=tech99 USER_NAME=ibaraki DOMAIN_NAME=tech99-handson.ca26.ca-developers.io PROFILE=aws-ca26-tech99"
 	@echo ""
 	@echo "  ECR:"
 	@echo "    make ecr-url        ECR Repository URL を表示"
