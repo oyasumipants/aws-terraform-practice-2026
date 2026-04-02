@@ -7,7 +7,7 @@
 ```
 terraform/aws/
 ├── environments/           # 環境ごとのTerraformコード
-│   └── techXX/            # TechXXハンズオン環境
+│   └── tech01/            # TechXXハンズオン環境
 │       ├── main.tf        # メインの設定ファイル
 │       ├── variables.tf   # 変数定義
 │       ├── outputs.tf     # 出力定義
@@ -40,7 +40,7 @@ cd terraform-practice-2025
 2. 使用したい環境のディレクトリに移動
 
 ```bash
-cd terraform/aws/environments/techXX
+cd terraform/aws/environments/tech01
 ```
 
 3. Terraform を初期化
