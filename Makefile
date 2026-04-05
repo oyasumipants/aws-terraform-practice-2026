@@ -109,13 +109,13 @@ ecr-login: check-setup
 ####################
 
 # docker build
-docker-build:
-	docker build -t bookshelf:latest -f api/Dockerfile .
+docker-build: check-setup
+	docker build -t bookshelf:$(USER_NAME) -f api/Dockerfile .
 
 # docker tag（USER_NAME をタグとして使用）
 docker-tag: check-setup
 	@REPO_URL=$$(cd $(ENV_DIR)/ecr && terraform output -raw repository_url) && \
-		docker tag bookshelf:latest $$REPO_URL:$(USER_NAME) && \
+		docker tag bookshelf:$(USER_NAME) $$REPO_URL:$(USER_NAME) && \
 		echo "Tagged: $$REPO_URL:$(USER_NAME)"
 
 # docker push
